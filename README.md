@@ -1,8 +1,6 @@
 # MAP675 Assignment 04
 ### Team: Mark Cruse & Derek Waggenspack
 
-#### Processes
-* 
 #### Data & Data Source(s)
 * Heritage Trees Portland from http://opendata-esri23.opendata.arcgis.com/datasets/a539e9fe98964fbca427fe84629db1be_0 [ESRI Portland R&D Center Open Data]
 *  Joined Neighborhood Coalition MAPLABEL field using QGIS 2.14.19 -- dw
