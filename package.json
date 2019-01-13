@@ -1,0 +1,17 @@
+{
+  "name": "assignment-04",
+  "version": "1.0.0",
+  "description": "The first part of Module 02 (Geoprocessing with Node) introduced you to Node and npm, a server-side JavaScript framework. We learned how to install packages globally using the `-g` flag, such as live-server and mapshaper, which can then be used from any location on the computer system. We also used how to initialize an npm project for a specific program and track packages installed locally using the **package.json** file. We then wrote several Node scripts for processing JSON and CSV data to produce web-ready GeoJSON files.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node build-scripts/processData.js && live-server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.2.0",
+    "csv-parse": "^2.0.0",
+    "csv2geojson": "^5.0.2",
+    "mapshaper": "^0.4.55"
+  }
+}

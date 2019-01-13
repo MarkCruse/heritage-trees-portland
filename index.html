@@ -1,0 +1,307 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Portland Neighborhood Coalitions</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css">
+    <link rel="stylesheet" href="libs/Leaflet.markercluster/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="libs/Leaflet.markercluster/MarkerCluster.css">
+    <link rel="stylesheet" href="stylesheet.css" type="text/css" charset="utf-8" />
+
+    <style>
+        header {
+            border-bottom: 1px solid white;
+            font-size: 2.5em;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background: rgba(80, 120, 80, 1);
+            /*set the background to a black*/
+        }
+
+        #map {
+            /*position: absolute;
+            width: 100%;
+            top: 0;
+            bottom: 0;*/
+            background: rgba(241, 239, 239, 0.75);
+            width: 960px;
+            height: 500px;
+            margin: 10px;
+            border: 1px solid #d3d3d3;
+            float: left;
+        }
+
+        h1 {
+            width: 960px;
+            margin: 18px auto 18px auto;
+            font-weight: normal;
+            color: #473825;
+            font-family: 'hojas_de_plataregular'
+        }
+
+        #main {
+            width: 960px;
+            margin: 18px auto 18px auto;
+        }
+
+        #main p {
+            font-size: 0.98em;
+            font-weight: 80;
+            color: #fffcfb;
+            line-height: 1.3em;
+            columns: 1;
+            column-gap: 4em;
+            column-rule: 1px dashed #dadada;
+        }
+
+        #main ul {
+            color: white;
+        }
+
+        #main li {
+            margin-bottom: 12px;
+        }
+
+        #main a {
+            color: rgb(184, 187, 190);
+        }
+
+        #footer {
+            width: 960px;
+            margin: 18px auto 18px auto;
+        }
+
+        #footer p {
+            font-size: .8em;
+            font-weight: 80;
+            color: #fffcfb;
+            line-height: 1.3em;
+            columns: 1;
+            column-gap: 4em;
+            column-rule: 1px dashed #dadada;
+        }
+
+        #footer a {
+            color: rgb(184, 187, 190);
+        }
+
+        #ui {
+            height: 490px;
+            width: 350px;
+            z-index: 1000;
+            /* place above map */
+            padding: 6px 12px;
+            background: rgba(235, 235, 235, .9);
+            font-size: 1em;
+            margin: 10px;
+        }
+
+        #ui ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #ui li {
+            margin-bottom: 6px;
+        }
+
+        #ui a {
+            text-decoration: none;
+        }
+
+        #ui a:hover {
+            font-weight: bold;
+        }
+
+        .highlight {
+            font-weight: bold;
+        }
+
+        .tooltip {
+            background: rgba(241, 239, 239, 0.897);
+            ;
+            color: rgb(48, 5, 5);
+            font-size: 1em;
+            width: 100px;
+            white-space: normal;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border: .5px solid rgb(65, 58, 58);
+            border-radius: 4px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            /* make main axis horizontal (default setting) */
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Heritage Trees of Portland</h1>
+    </header>
+    <div class="container">
+        <div id="map"></div>
+        <div id="ui">
+            <h3>Portland Neighborhood Coalitions
+                <br><span>(number of trees)</span></h3>
+            <ul id="legend-list"></ul>
+        </div>
+    </div>
+    <hr>
+    <div id="main">
+        <p>Heritage Trees in Portland, Oregon are trees that have been formally recognized by City Council for their unique size, age,
+            historical or horticultural significance.
+            <a href="https://www.portlandoregon.gov/parks/article/435812">More info here</a>
+        </p>
+    </div>
+    <div id="footer">
+<p style="float: left; width: 50%; text-align: left;">Map designed by:&nbsp;&nbsp;Mark Cruse &amp; Derek Waggenspack (November 2017)</p>
+        <p style="float: left; width: 50%; text-align: right;">Data source:
+            <a href="http://opendata-esri23.opendata.arcgis.com/">Esri Portland R&D Center Open Data</a></p>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+    <script src="libs/Leaflet.markercluster/leaflet.markercluster.js"></script>
+    <script>
+        var options = {
+            center: [45.54, -122.68],
+            zoom: 11,
+            minZoom: 9
+        }
+        var map = L.map('map', options);
+        L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy;<a href="https://carto.com/attribution">CARTO</a>'
+        }).addTo(map);
+
+        // create custom icon
+        var treeIcon = L.icon({
+            iconUrl: 'images/tree_icon_48x48.png',
+            iconSize: [38, 38], // size of the icon
+            opacity: .2
+        });
+
+        $.when(
+            $.getJSON('data/coalitions-counts.json'),
+            $.getJSON('data/vividcolors.json'),
+            $.getJSON('data/heritage-trees-portland-coalitions.json')
+        ).done(function(coalitions, colors, treeID) {
+            coalitions = coalitions[0];
+            colors = colors[0];
+            treeID = treeID[0];
+            // store a reference to the HTML list
+            var legendList = $('#legend-list');
+
+            // loop through the features and create a new
+            // list item for each feature in the legend
+            var k = 0;
+            for (var i in coalitions.features) {
+                if (coalitions.features[i].properties.MAPLABEL !== null) {
+                    coalitions.features[i].properties.CONUM = k; // assign a unique  id to each feature using k
+                    legendList.append('<li class="legend-item" id="coalitions-' + k + '"><a style="color:' + colors.Vivid[10][k] + '" href="#">' + coalitions.features[i].properties.MAPLABEL + ' (<span></span>)</a></li>');
+                    k++;
+                }
+            };
+            //create a layerGroup with geojson data
+            var coalitionsLayerGroup = L.geoJson(coalitions, {
+                style: function(feature) {
+                    // use the colors object to style
+                    // each polygon a unique color
+                    return {
+                        color: colors.Vivid[10][feature.properties.CONUM],
+                        fillOpacity: .6
+                    }
+                },
+                onEachFeature(feature, layer) {
+                    $('#coalitions-' + feature.properties.CONUM + ' span').append(feature.properties.count);
+                    layer.on('mouseover', function() {
+                        this.setStyle({
+                            fillOpacity: .8
+                        });
+                        $('#coalitions-' + feature.properties.CONUM).addClass('highlight');
+                    });
+                    layer.on('mouseout', function() {
+                        this.setStyle({
+                            fillOpacity: .6
+                        });
+                        $('#coalitions-' + feature.properties.CONUM).removeClass('highlight');
+                    });
+                }
+            }).addTo(map);
+            // console.log(colors.Vivid[10]);
+            // select all the list items and on mouseover
+            $('.legend-item').on('mouseover', function() {
+                // extract the specific number from the specific item
+                // being moused over
+                var num = this.id.replace('coalitions-', '');
+                // send this number as an argument to the highlight Coalition function
+                highlightCoalitions(num);
+            });
+
+            function highlightCoalitions(coalitionsNum) {
+                // loop through the coalitions polygons
+                coalitionsLayerGroup.eachLayer(function(layer) {
+
+                    // if the coalitions id matches the one we're mousing over
+                    if (layer.feature.properties.CONUM == coalitionsNum) {
+                        // change the layer style
+                        layer.setStyle({
+                            fillOpacity: .8
+                        }).bringToFront();
+                    } else {
+                        // return to original
+                        layer.setStyle({
+                            fillOpacity: .6
+                        });
+                    }
+                });
+            }
+            // create new markerClusterGroup
+            var markers = L.markerClusterGroup();
+            // loop through all our treeID features
+            treeID.features.forEach(function(feature) {
+                // create a new Leaflet marker for each
+                var coords = feature.geometry.coordinates,
+                    marker = L.marker([coords[0], coords[1]], {
+                        icon: treeIcon
+                    });
+                //var treeName = feature.properties.COMMON_NAM.toLowerCase().split(' ').map(function (word) {return (word.charAt(0).toUpperCase() + word.slice(1));}).join(' ');;
+                //var treeName = feature.properties.COMMON_NAM.replace(/\w\S*/g, function (txt) { return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); });
+                var treeName = titleCase(feature.properties.COMMON_NAM);
+                //console.log(treeName);
+                // bind a tooltip to the marker
+                marker.bindTooltip("Planted in " + feature.properties.YEAR + " this heritage <b>" + treeName + "</b> stands " + feature.properties.HEIGHT + " feet. ", {
+                    className: 'tooltip'
+                });
+
+                // add the marker to the markerClusterGroup
+                markers.addLayer(marker);
+            });
+            // add the markerClusterGroup to the map
+            map.addLayer(markers);
+
+            function titleCase(str) {
+                return str.toLowerCase().split(' ').map(function(word) {
+                    return (word.charAt(0).toUpperCase() + word.slice(1));
+                }).join(' ');
+            }
+        }); // end thee .done function
+    </script>
+</body>
+
+</html>
